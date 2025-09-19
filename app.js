@@ -1,15 +1,36 @@
-const http = require('http');
 
-const server = http.createServer((req, res) => {
-    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
 
-    res.writeHead(200, { "content-type": "text/plain" });
-    res.end("My first node server is running ......")
+
+const express = require("express");
+const db = require('./db');  
+const app = express();
+const PORT = 3000;
+
+// Middleware to parse JSON bodies
+app.use(express.json());
+
+
+app.post('/api/users', (req, res) => {
+  
+  const { name, email, age } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ error: "Name and Email are required" });
+  }
+
+  const sql = "INSERT INTO users (name, email, age) VALUES (?, ?, ?)";
+  db.query(sql, [name, email, age], (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+
+    res.status(201).json({ 
+      message: "User added successfully!", 
+      userId: result.insertId 
+    });
+  });
 });
 
-const port = 3000;
 
-server.listen(port, () => {
-    console.log(`Node server is running on https://localhost:${port}`);
 
-})
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
